@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hawk‑i · Documentation v0.7.0</title>
+    <!-- SEO -->
+    <meta name="description" content="Official documentation for Hawk‑i v0.7.0: open security intelligence for Web3. Learn installation, CLI commands, audit-grade reporting, scoring, remediation, and more.">
+    <meta name="keywords" content="Hawk-i docs, smart contract security, Web3 auditing, AI security, exploit simulation, static analysis, v0.7.0, security score, remediation">
+    <!-- Tailwind + Inter font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* brand color palette */
+        :root {
+            --steel: #687F97;
+            --copper: #986C67;
+            --grey: #77746C;
+        }
+        body {
+            background: #0c0c0c;
+            color: #e5e5e5;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+        .text-steel { color: var(--steel); }
+        .text-copper { color: var(--copper); }
+        .text-grey { color: var(--grey); }
+        .bg-steel { background-color: var(--steel); }
+        .border-steel { border-color: var(--steel); }
+
+        /* left sidebar */
+        .docs-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 18rem;
+            height: 100vh;
+            background: #0f0f0f;
+            border-right: 1px solid #202020;
+            overflow-y: auto;
+            transition: transform 0.2s ease;
+            z-index: 50;
+        }
+        .docs-sidebar a {
+            display: block;
+            padding: 0.6rem 1.5rem;
+            color: #aaa;
+            border-left: 3px solid transparent;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+        .docs-sidebar a:hover, .docs-sidebar a.active {
+            color: white;
+            background: rgba(104, 127, 151, 0.1);
+            border-left-color: var(--steel);
+        }
+        .docs-sidebar .section-title {
+            padding: 1rem 1.5rem 0.3rem;
+            color: var(--grey);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* right sidebar (table of contents) */
+        .docs-right-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 16rem;
+            height: 100vh;
+            background: #0f0f0f;
+            border-left: 1px solid #202020;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            z-index: 40;
+        }
+        .docs-right-sidebar .toc-title {
+            color: var(--steel);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .docs-right-sidebar .toc-item {
+            display: block;
+            padding: 0.4rem 0;
+            color: #aaa;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+            border-left: 2px solid transparent;
+            padding-left: 0.5rem;
+        }
+        .docs-right-sidebar .toc-item:hover,
+        .docs-right-sidebar .toc-item.active {
+            color: white;
+            border-left-color: var(--steel);
+            background: rgba(104, 127, 151, 0.05);
+        }
+        .docs-right-sidebar .toc-item.toc-h2 {
+            font-weight: 400;
+        }
+        .docs-right-sidebar .toc-item.toc-h3 {
+            padding-left: 1.5rem;
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        /* main content */
+        .docs-main {
+            margin-left: 18rem;
+            margin-right: 16rem;
+            padding: 2rem 2.5rem;
+        }
+
+        /* mobile adjustments */
+        @media (max-width: 768px) {
+            .docs-sidebar {
+                transform: translateX(-100%);
+            }
+            .docs-sidebar.open {
+                transform: translateX(0);
+            }
+            .docs-right-sidebar {
+                display: none;
+            }
+            .docs-main {
+                margin-left: 0;
+                margin-right: 0;
+                padding: 1.5rem;
+            }
+            .menu-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 45;
+            }
+            .menu-overlay.open {
+                display: block;
+            }
+        }
+
+        /* card style for highlights */
+        .doc-card {
+            background: #151515;
+            border: 1px solid #2a2a2a;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .doc-card h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: white;
+            scroll-margin-top: 5rem;
+        }
+        .doc-card h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin: 1.5rem 0 0.8rem;
+            color: var(--steel);
+            scroll-margin-top: 5rem;
+        }
+        .doc-card p, .doc-card li {
+            color: #b0b0b0;
+            line-height: 1.6;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--steel);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #d4d4d4;
+        }
+        .inline-code {
+            background: #1e1e1e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            border: 1px solid #333;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        hr {
+            border-color: #2a2a2a;
+            margin: 2rem 0;
+        }
+        .badge {
+            background: var(--steel);
+            color: black;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #2a2a2a;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        th {
+            background: #1e1e1e;
+            color: var(--steel);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- mobile overlay -->
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Left Sidebar -->
+    <aside id="sidebar" class="docs-sidebar">
+        <div class="p-5 flex items-center gap-2 border-b border-[#252525]">
+            <i class="fas fa-eye text-2xl text-[#687F97]"></i>
+            <span class="text-2xl font-bold text-white">Hawk‑<span class="text-[#687F97]">i</span></span>
+        </div>
+        <nav class="py-4">
+            <div class="section-title">GETTING STARTED</div>
+            <a href="#introduction" class="active">Introduction</a>
+            <a href="#installation">Installation</a>
+            <a href="#quickstart">Quickstart</a>
+
+            <div class="section-title mt-4">USAGE</div>
+            <a href="#cli-reference">CLI Reference</a>
+            <a href="#operational-modes">Operational Modes</a>
+            <a href="#reporting">Audit‑Grade Reporting</a>
+            <a href="#security-score">Security Score</a>
+            <a href="#remediation">Guided Remediation</a>
+            <a href="#telemetry">Telemetry</a>
+            <a href="#configuration">Configuration</a>
+            <a href="#monitoring">Monitoring</a>
+
+            <div class="section-title mt-4">UNDER THE HOOD</div>
+            <a href="#architecture">Architecture</a>
+            <a href="#subsystems">Subsystems</a>
+            <a href="#ai-integration">AI Integration</a>
+            <a href="#vulnerability-library">Vulnerability Library</a>
+
+            <div class="section-title mt-4">DEPLOYMENT</div>
+            <a href="#deployment">Deployment modes</a>
+            <a href="#privacy">Privacy & Security</a>
+
+            <div class="section-title mt-4">COMMUNITY</div>
+            <a href="#contributing">Contributing</a>
+            <a href="#roadmap">Roadmap</a>
+        </nav>
+        <div class="p-5 border-t border-[#252525] text-xs text-[#77746C]">
+            <i class="fas fa-shield-alt mr-2"></i>Security public good · v0.7.0
+        </div>
+    </aside>
+
+    <!-- Right Sidebar (On this page) -->
+    <aside class="docs-right-sidebar" id="rightSidebar">
+        <div class="toc-title">📋 ON THIS PAGE</div>
+        <div id="toc-container"></div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="docs-main">
+
+        <!-- mobile header -->
+        <div class="flex items-center gap-3 mb-6 md:hidden">
+            <button onclick="toggleSidebar()" class="text-2xl text-[#687F97]">
+                <i class="fas fa-bars"></i>
+            </button>
+            <i class="fas fa-eye text-2xl text-[#687F97]"></i>
+            <span class="text-xl font-bold text-white">Hawk‑i Docs</span>
+        </div>
+
+        <!-- INTRODUCTION -->
+        <section id="introduction" class="doc-card scroll-mt-16">
+            <h2>Introduction</h2>
+            <p class="lead text-lg text-white mb-4">Hawk‑i is an open security intelligence platform for Web3 repositories. It combines deterministic static analysis, AI reasoning, and live exploit simulation into a unified, privacy‑first tool.</p>
+            <p>With the <strong>v0.7.0 release</strong>, Hawk‑i evolves from a functional scanner to an <strong>audit‑grade security intelligence system</strong>. It now produces professional reports with quantified risk scores, guided remediation snippets, and optional telemetry to measure ecosystem impact.</p>
+            <div class="flex flex-wrap gap-3 mt-6">
+                <span class="badge">Open source</span>
+                <span class="badge">AI‑augmented</span>
+                <span class="badge">Self‑hostable</span>
+                <span class="badge">v0.7.0</span>
+            </div>
+        </section>
+
+        <!-- INSTALLATION -->
+        <section id="installation" class="doc-card scroll-mt-16">
+            <h2>Installation</h2>
+            <h3>Prerequisites</h3>
+            <ul class="list-disc list-inside mb-4">
+                <li>Python 3.9+</li>
+                <li>Node.js 16+ (for sandbox)</li>
+                <li>Docker (optional, for exploit simulation)</li>
+            </ul>
+
+            <h3>via pip (recommended)</h3>
+            <pre><code><span class="text-[#687F97]">$</span> pip install hawki</code></pre>
+            <p class="text-sm text-grey">Package available at <a href="https://pypi.org/project/hawki/" target="_blank" class="text-steel underline">pypi.org/project/hawki</a></p>
+
+            <h3>from source</h3>
+            <pre><code><span class="text-[#687F97]">$</span> git clone https://github.com/0xSemantic/hawki.git
+<span class="text-[#687F97]">$</span> cd hawki
+<span class="text-[#687F97]">$</span> pip install -e .</code></pre>
+
+            <h3>Docker image</h3>
+            <pre><code><span class="text-[#687F97]">$</span> docker pull levichinecherem/hawki:latest
+<span class="text-[#687F97]">$</span> docker run --rm -v $(pwd):/repo levichinecherem/hawki scan /repo</code></pre>
+            <p class="text-sm text-grey">Docker Hub: <a href="https://hub.docker.com/r/levichinecherem/hawki" target="_blank" class="text-steel underline">hub.docker.com/r/levichinecherem/hawki</a></p>
+        </section>
+
+        <!-- QUICKSTART -->
+        <section id="quickstart" class="doc-card scroll-mt-16">
+            <h2>Quickstart</h2>
+            <p>Scan a local repository with default settings (Minimal mode):</p>
+            <pre><code><span class="text-[#687F97]">$</span> hawki scan ./my-project</code></pre>
+
+            <p>Run a full audit with AI reasoning and exploit simulation (Full Audit mode):</p>
+            <pre><code><span class="text-[#687F97]">$</span> hawki scan ./contracts --ai --sandbox --format pdf --telemetry</code></pre>
+
+            <p>Generate a report from the latest scan:</p>
+            <pre><code><span class="text-[#687F97]">$</span> hawki report --format html --output report.html</code></pre>
+
+            <p>View the security score of a previous findings file:</p>
+            <pre><code><span class="text-[#687F97]">$</span> hawki score findings.json</code></pre>
+
+            <p>Display local telemetry stats:</p>
+            <pre><code><span class="text-[#687F97]">$</span> hawki metrics</code></pre>
+
+            <p class="mt-4">For more, see the <a href="#cli-reference" class="text-[#687F97] underline">CLI reference</a>.</p>
+        </section>
+
+        <!-- CLI REFERENCE -->
+        <section id="cli-reference" class="doc-card scroll-mt-16">
+            <h2>CLI Reference</h2>
+            <p>The main command is <span class="inline-code">hawki</span>. Below are all available subcommands and options.</p>
+
+            <h3>hawki scan</h3>
+            <p>Perform a one‑time security scan on a local directory or Git repository. Supports three operational modes depending on flags.</p>
+            <pre><code>hawki scan &lt;path&gt; [options]</code></pre>
+            <p><strong>Options:</strong></p>
+            <ul class="list-disc list-inside mb-2">
+                <li><code>-v, --verbose</code> – Enable debug logging.</li>
+                <li><code>-o, --output-dir &lt;dir&gt;</code> – Directory to store reports (default: <code>./hawki_reports</code>).</li>
+                <li><code>--ai</code> – Enable AI‑powered analysis (requires API key).</li>
+                <li><code>--ai-model &lt;model&gt;</code> – LLM model (e.g., <code>gemini/gemini-1.5-flash</code>, <code>openai/gpt-4</code>).</li>
+                <li><code>--api-key &lt;key&gt;</code> – API key for the chosen LLM (or set env var).</li>
+                <li><code>--sandbox</code> – Run exploit simulation sandbox (requires Docker).</li>
+                <li><code>--telemetry</code> – Opt in to anonymous usage metrics.</li>
+                <li><code>--format {md,json,html,pdf}</code> – Output report format (default: md).</li>
+            </ul>
+
+            <h3>hawki monitor</h3>
+            <p>Continuously monitor a repository or deployed contract for changes and trigger automatic rescans.</p>
+            <pre><code>hawki monitor [target] [options]</code></pre>
+            <p><strong>Options:</strong></p>
+            <ul class="list-disc list-inside mb-2">
+                <li><code>-c, --config &lt;file&gt;</code> – JSON configuration file for watchers.</li>
+                <li><code>--state-dir &lt;dir&gt;</code> – Directory to store watcher state (default: <code>~/.hawki/monitor_state</code>).</li>
+                <li><code>--alert-log &lt;file&gt;</code> – File to append alerts to.</li>
+                <li><code>--interval &lt;sec&gt;</code> – Polling interval in seconds (default: 60).</li>
+                <li><code>--branch &lt;name&gt;</code> – Git branch to monitor (default: main).</li>
+                <li><code>--contract-address &lt;addr&gt;</code> – Ethereum contract address to monitor.</li>
+                <li><code>--rpc-url &lt;url&gt;</code> – RPC URL for contract monitoring (default: <code>http://localhost:8545</code>).</li>
+            </ul>
+
+            <h3>hawki report</h3>
+            <p>Generate an audit‑grade report from a previous scan’s findings (JSON file) or from the latest scan.</p>
+            <pre><code>hawki report [--input findings.json] [--format pdf|md|html|json] [--output report.pdf]</code></pre>
+            <p><strong>Options:</strong></p>
+            <ul class="list-disc list-inside mb-2">
+                <li><code>-i, --input &lt;file&gt;</code> – Path to findings JSON file (if omitted, uses latest scan in output dir).</li>
+                <li><code>-f, --format &lt;format&gt;</code> – Output format (md, json, html, pdf).</li>
+                <li><code>-o, --output &lt;file&gt;</code> – Output file path.</li>
+            </ul>
+
+            <h3>hawki score</h3>
+            <p>Calculate and display the security score (0–100) for a given findings file.</p>
+            <pre><code>hawki score findings.json</code></pre>
+
+            <h3>hawki metrics</h3>
+            <p>Display locally stored telemetry statistics (if any).</p>
+            <pre><code>hawki metrics</code></pre>
+
+            <h3>hawki simulate</h3>
+            <p>Run a specific exploit simulation against a contract (advanced usage).</p>
+            <pre><code>hawki simulate --target Vault.sol --attack reentrancy</code></pre>
+            <p><strong>Options:</strong></p>
+            <ul class="list-disc list-inside mb-2">
+                <li><code>--target &lt;file&gt;</code> – Solidity file or contract name.</li>
+                <li><code>--attack &lt;name&gt;</code> – Name of the attack script (e.g., <code>reentrancy</code>).</li>
+            </ul>
+
+            <h3>Examples</h3>
+            <pre><code>
+# Basic scan (Minimal mode)
+hawki scan ./my-project
+
+# Enhanced scan with AI
+hawki scan ./my-project --ai --ai-model openai/gpt-4
+
+# Full audit with sandbox and PDF report
+hawki scan ./my-project --ai --sandbox --format pdf --output report.pdf
+
+# Monitor a repository
+hawki monitor ./my-project --interval 300 --alert-log alerts.txt
+
+# Generate a report from previous scan
+hawki report --input findings.json --format html --output report.html
+
+# View security score
+hawki score findings.json
+
+# Show telemetry stats
+hawki metrics
+        </code></pre>
+        </section>
+
+        <!-- OPERATIONAL MODES -->
+        <section id="operational-modes" class="doc-card scroll-mt-16">
+            <h2>Operational Modes</h2>
+            <p>Hawk‑i adapts to your environment and privacy needs. Three modes are supported:</p>
+            <table>
+                <tr><th>Mode</th><th>Static Rules</th><th>AI</th><th>Sandbox</th><th>Docker Required</th></tr>
+                <tr><td><strong>Minimal</strong></td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+                <tr><td><strong>Enhanced</strong></td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+                <tr><td><strong>Full Audit</strong></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            </table>
+            <p class="mt-4">The generated report will indicate which mode was used and adapt content accordingly (e.g., omit exploit steps if sandbox not enabled).</p>
+        </section>
+
+        <!-- REPORTING -->
+        <section id="reporting" class="doc-card scroll-mt-16">
+            <h2>Audit‑Grade Reporting (ARS v2)</h2>
+            <p>v0.7.0 introduces the <strong>Audit‑Grade Report System</strong>, producing professional reports suitable for grant applications, enterprise reviews, and auditor handoffs.</p>
+            <h3>Report Structure</h3>
+            <ul class="list-disc list-inside">
+                <li><strong>Executive Summary</strong> – total contracts, severity counts, security score, risk classification, mode used.</li>
+                <li><strong>Vulnerability Breakdown</strong> – pie chart (severity) + bar chart (type) + fallback table.</li>
+                <li><strong>Per‑Finding Details</strong> – each finding includes:
+                    <ul class="list-circle list-inside ml-4">
+                        <li>Title & severity</li>
+                        <li>File & line number</li>
+                        <li>Vulnerable code snippet</li>
+                        <li>Recommended fix snippet (from Remediation Engine)</li>
+                        <li>Explanation (AI or fallback)</li>
+                        <li>Impact analysis</li>
+                        <li>Exploit reproduction steps (if sandbox succeeded)</li>
+                    </ul>
+                </li>
+                <li><strong>Simulation Metrics</strong> – success rate, balance deltas, gas used.</li>
+            </ul>
+            <h3>Output Formats</h3>
+            <p>Markdown, JSON, HTML, and PDF (optional dependencies).</p>
+        </section>
+
+        <!-- SECURITY SCORE -->
+        <section id="security-score" class="doc-card scroll-mt-16">
+            <h2>Security Score</h2>
+            <p>Hawk‑i computes a deterministic 0–100 security score based on findings and sandbox results.</p>
+            <h3>Formula</h3>
+            <p>Base: 100. Deductions per finding:</p>
+            <ul class="list-disc list-inside">
+                <li>Critical: -15</li>
+                <li>High: -8</li>
+                <li>Medium: -4</li>
+                <li>Low: -1</li>
+            </ul>
+            <p>If sandbox is enabled, each successfully reproduced exploit adds an extra -5 (capped).</p>
+            <h3>Classification Bands</h3>
+            <table>
+                <tr><th>Score</th><th>Classification</th></tr>
+                <tr><td>90–100</td><td>Secure</td></tr>
+                <tr><td>75–89</td><td>Minor Risk</td></tr>
+                <tr><td>50–74</td><td>Moderate Risk</td></tr>
+                <tr><td>25–49</td><td>High Risk</td></tr>
+                <tr><td>0–24</td><td>Critical Risk</td></tr>
+            </table>
+            <p class="mt-4">The score is included in every report and can be viewed standalone with <span class="inline-code">hawki score</span>.</p>
+        </section>
+
+        <!-- REMEDIATION -->
+        <section id="remediation" class="doc-card scroll-mt-16">
+            <h2>Guided Remediation Engine</h2>
+            <p>Every finding now includes a <strong>context‑aware fix snippet</strong>. The Remediation Engine uses templates and AST information to generate accurate, secure code replacements.</p>
+            <p>Example for reentrancy:</p>
+            <pre><code>// Vulnerable
+function withdraw() external {
+    uint amount = balances[msg.sender];
+    (bool success, ) = msg.sender.call{value: amount}("");
+    require(success);
+    balances[msg.sender] = 0;
+}
+
+// Recommended fix
+function withdraw() external nonReentrant {
+    uint amount = balances[msg.sender];
+    balances[msg.sender] = 0;
+    (bool success, ) = msg.sender.call{value: amount}("");
+    require(success);
+}</code></pre>
+            <p>Fixes are populated automatically in reports and are also available via the <span class="inline-code">hawki report</span> command.</p>
+        </section>
+
+        <!-- TELEMETRY -->
+        <section id="telemetry" class="doc-card scroll-mt-16">
+            <h2>Telemetry (Opt‑In)</h2>
+            <p>To measure ecosystem impact, Hawk‑i can collect <strong>anonymous usage metrics</strong> when the <span class="inline-code">--telemetry</span> flag is used.</p>
+            <p>Collected data includes:</p>
+            <ul class="list-disc list-inside">
+                <li>Total scans performed</li>
+                <li>Findings per severity</li>
+                <li>Simulation success rate (if sandbox enabled)</li>
+                <li>Hawk‑i version</li>
+                <li>Execution mode (minimal/enhanced/full)</li>
+            </ul>
+            <p><strong>No source code, repository names, or IP addresses are ever collected.</strong> Data is stored locally in <span class="inline-code">~/.hawki/metrics.json</span> and can be viewed with <span class="inline-code">hawki metrics</span>.</p>
+            <p>If you opt in, Hawk‑i may send aggregated statistics to a public endpoint to power the community metrics badge. You can disable telemetry entirely by never using the flag or setting <span class="inline-code">HAWKI_TELEMETRY=0</span>.</p>
+        </section>
+
+        <!-- CONFIGURATION -->
+        <section id="configuration" class="doc-card scroll-mt-16">
+            <h2>Configuration</h2>
+            <p>Hawk‑i can be configured via <span class="inline-code">.hawkirc</span> or environment variables. Example <span class="inline-code">.hawkirc</span>:</p>
+            <pre><code>[ai]
+provider = "openai"
+model = "gpt-4"
+api_key = "sk-..."   # or set env HAWKI_OPENAI_KEY
+
+[monitoring]
+interval = 300
+webhook_secret = "..."
+
+[telemetry]
+enabled = false      # override with --telemetry
+
+[reporting]
+default_format = "pdf"
+charts = true        # enable matplotlib charts</code></pre>
+        </section>
+
+        <!-- MONITORING -->
+        <section id="monitoring" class="doc-card scroll-mt-16">
+            <h2>Monitoring</h2>
+            <p>Hawk‑i can continuously monitor repositories via git hooks, file watchers, or GitHub webhooks. Set up a webhook endpoint:</p>
+            <pre><code><span class="text-[#687F97]">$</span> hawki watch --webhook --port 8080</code></pre>
+            <p>Configure your GitHub repo to send push events to <span class="inline-code">http://your-host:8080/webhook</span>.</p>
+        </section>
+
+        <!-- ARCHITECTURE -->
+        <section id="architecture" class="doc-card scroll-mt-16">
+            <h2>Architecture overview</h2>
+            <p>Hawk‑i consists of seven core subsystems, plus new additions in v0.7.0:</p>
+            <ul class="grid sm:grid-cols-2 gap-2 mt-4">
+                <li><span class="text-[#687F97] font-mono">RIE</span> – Repository Intelligence Engine</li>
+                <li><span class="text-[#687F97] font-mono">SRE</span> – Static Rule Engine (30+ rules)</li>
+                <li><span class="text-[#687F97] font-mono">AIRE</span> – AI Reasoning Engine</li>
+                <li><span class="text-[#687F97] font-mono">ESS</span> – Exploit Simulation Sandbox</li>
+                <li><span class="text-[#687F97] font-mono">AMS</span> – Activity Monitoring System</li>
+                <li><span class="text-[#687F97] font-mono">SDL</span> – Security Data Layer</li>
+                <li><span class="text-[#687F97] font-mono">DIL</span> – Dashboard & Interface</li>
+                <li><span class="text-[#687F97] font-mono">REM</span> – Remediation Engine (new)</li>
+                <li><span class="text-[#687F97] font-mono">TEL</span> – Telemetry Module (new)</li>
+                <li><span class="text-[#687F97] font-mono">ARS</span> – Audit Report System (new)</li>
+            </ul>
+            <p class="mt-4">Each can be used independently; they communicate via internal APIs and a shared metadata store.</p>
+        </section>
+
+        <!-- SUBSYSTEMS -->
+        <section id="subsystems" class="doc-card scroll-mt-16">
+            <h2>Subsystems in depth</h2>
+            <h3>Repository Intelligence Engine (RIE)</h3>
+            <p>Traverses file systems, parses Solidity (via tree‑sitter, Slither AST), builds dependency graphs and contract registries.</p>
+
+            <h3>Static Rule Engine (SRE)</h3>
+            <p>Dynamically loads rules from <span class="inline-code">rules/</span> directory. v0.7.0 includes 30 standardized rules, each with explanation, impact, and fix templates.</p>
+
+            <h3>AI Reasoning Engine (AIRE)</h3>
+            <p>Supports OpenAI, Anthropic, Gemini, and local LLMs. Now integrates with scoring and provides fallback explanations when AI is disabled.</p>
+
+            <h3>Exploit Simulation Sandbox (ESS)</h3>
+            <p>Dockerized Hardhat/Foundry environment. Returns detailed metrics (balances, gas, tx hash) and influences the security score.</p>
+
+            <h3>Remediation Engine (REM)</h3>
+            <p>Generates context‑aware fix snippets using templates and AST information.</p>
+
+            <h3>Telemetry Module (TEL)</h3>
+            <p>Opt‑in anonymous metrics collection and local storage.</p>
+
+            <h3>Audit Report System (ARS)</h3>
+            <p>Produces professional reports with charts, scores, and per‑finding remediation.</p>
+        </section>
+
+        <!-- AI INTEGRATION -->
+        <section id="ai-integration" class="doc-card scroll-mt-16">
+            <h2>AI Integration</h2>
+            <p>Hawk‑i supports multiple LLM providers for AI‑powered reasoning. You can enable AI analysis with the <code>--ai</code> flag and specify the model and API key via command line, environment variables, or configuration file.</p>
+            
+            <h3>Command‑Line Flags</h3>
+            <ul class="list-disc list-inside">
+                <li><code>--ai</code> – Enable AI‑powered analysis.</li>
+                <li><code>--ai-model</code> – Specify the model (e.g., <code>gemini/gemini-1.5-flash</code>, <code>openai/gpt-4</code>, <code>ollama/codellama</code>).</li>
+                <li><code>--api-key</code> – Provide the API key directly (alternative to environment variables).</li>
+            </ul>
+            
+            <h3>Environment Variables</h3>
+            <p>You can set API keys using the following environment variables (recommended for security):</p>
+            <pre><code>
+    export GEMINI_API_KEY=your_key_here      # Google Gemini
+    export OPENAI_API_KEY=your_key_here      # OpenAI
+    export ANTHROPIC_API_KEY=your_key_here   # Anthropic Claude
+            </code></pre>
+            
+            <h3>Local Models with Ollama</h3>
+            <p>To use local models via <a href="https://ollama.com" target="_blank" class="text-steel underline">Ollama</a>, specify the model as <code>ollama/&lt;model_name&gt;</code>, e.g.:</p>
+            <pre><code>hawki scan ./contracts --ai --ai-model ollama/codellama</code></pre>
+            <p>Ensure Ollama is running locally and the model is pulled.</p>
+            
+            <h3>Fallback Behavior</h3>
+            <p>If AI is disabled (<code>--ai</code> not used), Hawk‑i automatically falls back to rule‑provided explanation and impact templates. This guarantees that every finding includes a clear description and remediation guidance, even without an LLM.</p>
+            
+            <h3>Example: Full AI‑Powered Scan</h3>
+            <pre><code>hawki scan ./my-project --ai --ai-model openai/gpt-4 --api-key sk-... --format pdf --sandbox</code></pre>
+        </section>
+
+        <!-- VULNERABILITY LIBRARY -->
+        <section id="vulnerability-library" class="doc-card scroll-mt-16">
+            <h2>Vulnerability Library (30 Rules)</h2>
+            <p>v0.7.0 expands coverage to <strong>30 vulnerabilities</strong>, each with:</p>
+            <ul class="list-disc list-inside">
+                <li>Detection rule (Python, dynamically loaded)</li>
+                <li>Attack script (for critical/high, in <span class="inline-code">attack_scripts/</span>)</li>
+                <li>Fix template (JSON in <span class="inline-code">remediation_engine/templates/</span>)</li>
+                <li>Explanation & impact templates</li>
+            </ul>
+            <p>Categories include reentrancy, access control, oracle manipulation, flash loans, signature replay, and more. See the <a href="https://github.com/0xSemantic/hawki/tree/main/hawki/core/static_rule_engine/rules" target="_blank" class="text-steel underline">rules directory</a> for the full list.</p>
+        </section>
+
+        <!-- DEPLOYMENT -->
+        <section id="deployment" class="doc-card scroll-mt-16">
+            <h2>Deployment modes</h2>
+            <ul>
+                <li><strong>Local</strong> – runs on developer machine, everything in‑memory or local SQLite.</li>
+                <li><strong>Self‑hosted</strong> – Docker Compose with PostgreSQL, Redis, optional sandbox nodes.</li>
+                <li><strong>Managed cloud</strong> – (future) ephemeral scanning, no data retention.</li>
+            </ul>
+        </section>
+
+        <!-- PRIVACY -->
+        <section id="privacy" class="doc-card scroll-mt-16">
+            <h2>Privacy & Security</h2>
+            <p>Hawk‑i is built with privacy as a first principle:</p>
+            <ul class="list-disc list-inside">
+                <li>All processing can be done locally, code never leaves your machine.</li>
+                <li>When using cloud AI, you control the API keys; prompts are anonymized.</li>
+                <li>Telemetry is opt‑in and contains no identifiable information.</li>
+                <li>Sandboxes are ephemeral and destroyed after each simulation.</li>
+                <li>No source code is ever uploaded to any remote server.</li>
+            </ul>
+        </section>
+
+        <!-- CONTRIBUTING -->
+        <section id="contributing" class="doc-card scroll-mt-16">
+            <h2>Contributing</h2>
+            <p>We welcome contributions! See our <a href="https://github.com/0xSemantic/hawki" target="_blank" class="text-[#687F97] underline">GitHub</a> for issues and pull requests. Please read the <span class="inline-code">CONTRIBUTING.md</span> guide. New rules, attack scripts, and remediation templates can be added without touching core code.</p>
+        </section>
+
+        <!-- ROADMAP -->
+        <section id="roadmap" class="doc-card scroll-mt-16">
+            <h2>Roadmap</h2>
+            <ul class="list-disc list-inside">
+                <li>Phase 1: Repository intelligence + static rule engine (✅)</li>
+                <li>Phase 2: AI reasoning (✅)</li>
+                <li>Phase 3: Exploit simulation sandbox (✅)</li>
+                <li>Phase 4: Continuous monitoring & alerts (✅)</li>
+                <li>Phase 5: CI/CD & ecosystem integrations (✅)</li>
+                <li>Phase 6: Deployment (PyPI, Docker, CLI) (✅)</li>
+                <li><strong>Phase 7: v0.7.0 – Intelligence & Reporting Upgrade (✅)</strong>
+                    <ul class="list-circle list-inside ml-4">
+                        <li>Audit‑grade reporting (ARS v2)</li>
+                        <li>30 vulnerability rules</li>
+                        <li>Security score</li>
+                        <li>Guided remediation engine</li>
+                        <li>Opt‑in telemetry</li>
+                    </ul>
+                </li>
+                <li>Phase 8: Dashboard & real‑time visualisation (🔜)</li>
+                <li>Phase 9: Intelligence network & community rules marketplace (🔜)</li>
+            </ul>
+            <p class="mt-4 text-grey">Current version: <strong>v0.7.0</strong></p>
+        </section>
+
+        <hr>
+        <footer class="text-sm text-[#77746C] flex justify-between">
+            <span>© 2026 Hawk‑i · open security infrastructure</span>
+            <span>
+                <a href="https://github.com/0xSemantic/hawki" target="_blank" class="text-xl hover:text-[#687F97]"><i class="fab fa-github"></i></a>
+                <a href="#" class="text-xl ml-2 hover:text-[#687F97]"><i class="fab fa-discord"></i></a>
+                <a href="https://hub.docker.com/r/levichinecherem/hawki" target="_blank" class="text-xl ml-2 hover:text-[#687F97]"><i class="fab fa-docker"></i></a>
+            </span>
+        </footer>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('menuOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        function buildToc() {
+            const container = document.getElementById('toc-container');
+            const sections = document.querySelectorAll('section[id]');
+            let tocHtml = '';
+
+            sections.forEach(section => {
+                const id = section.getAttribute('id');
+                const h2 = section.querySelector('h2');
+                if (h2) {
+                    tocHtml += `<a class="toc-item toc-h2" href="#${id}">${h2.innerText}</a>`;
+
+                    const h3s = section.querySelectorAll('h3');
+                    h3s.forEach(h3 => {
+                        if (!h3.id) {
+                            h3.id = h3.innerText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                        }
+                        tocHtml += `<a class="toc-item toc-h3" href="#${h3.id}">${h3.innerText}</a>`;
+                    });
+                }
+            });
+
+            container.innerHTML = tocHtml || '<p class="text-grey">No sections</p>';
+
+            window.addEventListener('scroll', () => {
+                const scrollPosition = window.scrollY + 100;
+                const tocLinks = document.querySelectorAll('.toc-item');
+                let activeId = '';
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionBottom = sectionTop + section.offsetHeight;
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                        activeId = section.getAttribute('id');
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + activeId) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 80;
+                if (pageYOffset >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            document.querySelectorAll('.docs-sidebar a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        document.querySelectorAll('.docs-sidebar a').forEach(a => {
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = a.getAttribute('href').substring(1);
+                const target = document.getElementById(targetId);
+                if (target) {
+                    window.scrollTo({ top: target.offsetTop - 70, behavior: 'smooth' });
+                }
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('toc-item')) {
+                e.preventDefault();
+                const href = e.target.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(href.substring(1));
+                    if (target) {
+                        window.scrollTo({ top: target.offsetTop - 70, behavior: 'smooth' });
+                    }
+                }
+            }
+        });
+
+        buildToc();
+    </script>
+</body>
+</html>

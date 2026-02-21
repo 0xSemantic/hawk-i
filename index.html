@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hawk‑i · Holistic Analysis for Web3 Kode & Infrastructure</title>
+    <!-- SEO meta -->
+    <meta name="description" content="Hawk-i is an open, AI‑augmented security intelligence platform for Web3 repositories. Scan, audit, simulate exploits, and monitor continuously — with privacy first.">
+    <meta name="keywords" content="smart contract security, Web3 auditing, AI security, exploit simulation, static analysis, blockchain, Hawk-i">
+    <meta name="author" content="Hawk-i">
+    <!-- Tailwind + base styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js 3 for simple metrics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- Three.js for minimal 3D (core) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* custom strict palette – only the three brand colors + black/white for readability */
+        :root {
+            --steel-blue: #687F97;
+            --copper-clay: #986C67;
+            --tactical-grey: #77746C;
+        }
+        body {
+            background-color: #0b0b0b; /* deep dark background to let colors pop */
+            color: #e0e0e0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        /* subtle background pattern (optional) */
+        .bg-grid {
+            background-image: linear-gradient(var(--tactical-grey) 0.5px, transparent 0.5px), linear-gradient(90deg, var(--tactical-grey) 0.5px, transparent 0.5px);
+            background-size: 40px 40px;
+            opacity: 0.08;
+        }
+        .brand-gradient {
+            background: linear-gradient(145deg, var(--steel-blue) 0%, #3a4d5e 100%);
+        }
+        /* custom utility classes for brand colors */
+        .text-steel { color: #687F97; }
+        .text-copper { color: #986C67; }
+        .text-grey { color: #77746C; }
+        .bg-steel { background-color: #687F97; }
+        .bg-copper { background-color: #986C67; }
+        .bg-grey { background-color: #77746C; }
+        .border-steel { border-color: #687F97; }
+        .border-copper { border-color: #986C67; }
+        .hover\:bg-steel:hover { background-color: #687F97; }
+        .hover\:text-white:hover { color: #fff; }
+        /* terminal simulation */
+        .cli-window {
+            background: #1a1a1a;
+            border: 1px solid #687F97;
+            border-radius: 0.75rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px #687F97 inset;
+        }
+        /* card style */
+        .card-dark {
+            background: rgba(20,20,20,0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid #2a2a2a;
+            transition: border 0.2s;
+        }
+        .card-dark:hover {
+            border-color: #687F97;
+        }
+        /* 3d canvas container */
+        #three-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ticker styles with brand palette */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background-color: #0f0f0f;        /* dark background to match site */
+            border-top: 1px solid var(--steel);
+            border-bottom: 1px solid var(--steel);
+            padding: 0.7rem 0;
+            white-space: nowrap;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .ticker-move {
+            display: inline-block;
+            animation: ticker 45s linear infinite;
+        }
+
+        .ticker-item {
+            display: inline-block;
+            padding: 0 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #e0e0e0;                   /* light text */
+            letter-spacing: 0.3px;
+        }
+
+        .ticker-item i {
+            color: var(--steel);               /* steel blue for icons */
+            margin-right: 0.4rem;
+            font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+
+        .ticker-item:hover i {
+            color: var(--copper);              /* copper on hover */
+        }
+
+        /* pause on hover */
+        .ticker-wrap:hover .ticker-move {
+            animation-play-state: paused;
+        }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* optional responsive adjustment */
+        @media (max-width: 640px) {
+            .ticker-item {
+                padding: 0 1rem;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- 3D canvas (background / hero) -->
+    <div id="three-canvas" class="fixed top-0 left-0 w-full h-full -z-10 opacity-40"></div>
+
+    <!-- live chain & security platform ticker -->
+    <div class="ticker-wrap">
+        <div class="ticker-move">
+            <!-- first set of items (duplicated for seamless loop) -->
+            <span class="ticker-item"><i class="fas fa-link"></i> Ethereum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> BNB Chain</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Polygon</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Arbitrum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Optimism</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Avalanche</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Fantom</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Gnosis</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Slither</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Mythril</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Foundry</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Hardhat</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Echidna</span>
+            <!-- duplicate for seamless loop -->
+            <span class="ticker-item"><i class="fas fa-link"></i> Ethereum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> BNB Chain</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Polygon</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Arbitrum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Optimism</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Avalanche</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Fantom</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Gnosis</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Slither</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Mythril</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Foundry</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Hardhat</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Echidna</span>
+        </div>
+    </div>
+
+    <!-- Navigation (simple) -->
+    <nav class="relative z-20 border-b border-[#2a2a2a] bg-black/30 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-eye text-2xl text-[#687F97]"></i>
+                <span class="text-2xl font-bold tracking-tight text-white">Hawk‑<span class="text-[#687F97]">i</span></span>
+                <span class="hidden md:inline-block ml-4 text-xs font-mono text-[#77746C] border-l border-[#77746C] pl-4">Holistic Analysis for Web3 Kode & Infrastructure</span>
+            </div>
+            <div class="flex gap-6 text-sm items-center">
+                <a href="./docs.html" class="text-[#e0e0e0] hover:text-[#687F97] transition">Docs</a>
+                <a href="./changelog.html" class="hover:text-[#687F97] transition">Changelog</a>
+                <a href="https://github.com/0xSemantic/hawki" target="_blank" class="text-[#e0e0e0] hover:text-[#687F97] transition">GitHub</a>
+                <a href="https://pypi.org/project/hawki/" target="_blank" class="bg-[#687F97] text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-[#7a94af] transition">pip install hawki</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section with 3D backdrop -->
+    <section class="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-20 md:pt-32 md:pb-28">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="hero-content">
+                <div class="inline-flex items-center gap-2 border border-[#687F97]/30 bg-[#687F97]/10 px-4 py-2 rounded-full mb-8">
+                    <span class="w-2 h-2 bg-[#986C67] rounded-full animate-pulse"></span>
+                    <span class="text-xs font-mono tracking-wider text-[#986C67]">SECURITY INTELLIGENCE LAYER</span>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight">
+                    Watch like a <span class="text-[#687F97]">Hawk</span>.<br>Secure like infrastructure.
+                </h1>
+                <p class="text-xl text-[#b0b0b0] mt-6 max-w-xl">
+                    Hawk‑i combines deterministic analysis, AI reasoning, and live exploit simulation into one open platform.  
+                    <span class="block mt-2 font-mono text-[#687F97]">hawki scan · audit · simulate · watch</span>
+                </p>
+                <div class="flex flex-wrap gap-4 mt-10">
+                    <a href="https://github.com/0xSemantic/hawki#quick-start" target="_blank" class="bg-[#687F97] text-black px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#7a94af] transition inline-flex items-center gap-3">
+                        <i class="fas fa-shield-alt"></i> Start scanning
+                    </a>
+                    <a href="https://github.com/0xSemantic/hawki/blob/main/README.md" target="_blank" class="border border-[#687F97] text-[#687F97] px-8 py-4 rounded-lg font-semibold text-lg hover:bg-[#687F97] hover:text-black transition inline-flex items-center gap-3">
+                        <i class="fas fa-scroll"></i> Read the story
+                    </a>
+                </div>
+                <div class="flex gap-8 mt-12 text-sm text-[#77746C]">
+                    <div><i class="fas fa-check-circle text-[#687F97] mr-2"></i>Open source</div>
+                    <div><i class="fas fa-check-circle text-[#687F97] mr-2"></i>Privacy first</div>
+                    <div><i class="fas fa-check-circle text-[#687F97] mr-2"></i>Self‑hostable</div>
+                </div>
+            </div>
+            <div class="hidden md:block relative">
+                <!-- CLI preview card floating -->
+                <div class="cli-window p-5 transform rotate-1 hover:rotate-0 transition border-l-4 border-[#986C67]">
+                    <div class="flex gap-2 mb-3">
+                        <div class="w-3 h-3 rounded-full bg-[#986C67]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#687F97]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#77746C]"></div>
+                    </div>
+                    <code class="text-sm font-mono text-[#b0b0b0]">
+                        <span class="text-[#687F97]">$</span> hawki audit ./contracts<br>
+                        <span class="text-green-600">✓ Slither analysis</span> (no critical)<br>
+                        <span class="text-[#986C67]">⚠ AI logic flaw</span> in withdraw()<br>
+                        <span class="text-[#986C67]">⚠ Possible reentrancy via callback</span><br>
+                        <span class="text-[#687F97]">$</span> hawki simulate --attack reentrancy<br>
+                        <span class="text-white">[sandbox] drain success: 120 ETH</span><br>
+                        <span class="text-[#687F97]">→ PoC generated</span>
+                    </code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Subsystems / Core Components (7 cards) -->
+    <section class="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-[#2a2a2a]">
+        <div class="text-center mb-16">
+            <span class="text-[#986C67] font-mono text-sm">// subsystems</span>
+            <h2 class="text-4xl font-bold text-white mt-2">Seven pillars of <span class="text-[#687F97]">security intelligence</span></h2>
+            <p class="text-[#77746C] max-w-2xl mx-auto mt-4">Every component works independently yet integrates seamlessly — from repo ingestion to exploit simulation.</p>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- 1 RIE -->
+            <div class="card-dark p-6 rounded-xl">
+                <i class="fas fa-code-branch text-3xl text-[#687F97] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">Repository Intelligence Engine</h3>
+                <p class="text-[#b0b0b0] text-sm">Recursive traversal, AST parsing, dependency graphs & contract registry.</p>
+            </div>
+            <!-- 2 SRE -->
+            <div class="card-dark p-6 rounded-xl">
+                <i class="fas fa-gavel text-3xl text-[#687F97] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">Static Rule Engine</h3>
+                <p class="text-[#b0b0b0] text-sm">Slither, Mythril, custom detectors for reentrancy, access flaws, delegatecall.</p>
+            </div>
+            <!-- 3 AIRE -->
+            <div class="card-dark p-6 rounded-xl">
+                <i class="fas fa-brain text-3xl text-[#687F97] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">AI Reasoning Engine</h3>
+                <p class="text-[#b0b0b0] text-sm">Multi‑LLM (OpenAI, Gemini, local) for logic flaws, economic exploits, governance.</p>
+            </div>
+            <!-- 4 ESS -->
+            <div class="card-dark p-6 rounded-xl">
+                <i class="fas fa-flask text-3xl text-[#687F97] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">Exploit Simulation Sandbox</h3>
+                <p class="text-[#b0b0b0] text-sm">Dockerized Hardhat/Foundry, auto‑deploy, attack injection, PoC generation.</p>
+            </div>
+            <!-- 5 AMS -->
+            <div class="card-dark p-6 rounded-xl">
+                <i class="fas fa-satellite-dish text-3xl text-[#687F97] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">Activity Monitoring System</h3>
+                <p class="text-[#b0b0b0] text-sm">Git hooks, webhooks, CI triggers — track commits, PRs, dependency changes.</p>
+            </div>
+            <!-- 6 SDL -->
+            <div class="card-dark p-6 rounded-xl">
+                <i class="fas fa-database text-3xl text-[#687F97] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">Security Data Layer</h3>
+                <p class="text-[#b0b0b0] text-sm">Metadata storage, vulnerability fingerprints, risk scores — local or self‑hosted.</p>
+            </div>
+            <!-- 7 DIL -->
+            <div class="card-dark p-6 rounded-xl">
+                <i class="fas fa-chart-pie text-3xl text-[#687F97] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">Dashboard & Interface</h3>
+                <p class="text-[#b0b0b0] text-sm">Security overview, exploit viewer, risk analytics, repo scoring.</p>
+            </div>
+            <!-- +1 Extras: CLI -->
+            <div class="card-dark p-6 rounded-xl border border-[#986C67]/30">
+                <i class="fas fa-terminal text-3xl text-[#986C67] mb-4"></i>
+                <h3 class="text-xl font-semibold text-white mb-2">hawki CLI</h3>
+                <p class="text-[#b0b0b0] text-sm">scan, audit, simulate, watch, report — full power from terminal.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hybrid Intelligence + 3D visualization (minimal chart + 3D message) -->
+    <section class="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-[#2a2a2a]">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+                <span class="text-[#986C67] font-mono text-sm">// hybrid analysis</span>
+                <h2 class="text-4xl font-bold text-white mt-2">Deterministic + <span class="text-[#687F97]">AI reasoning</span></h2>
+                <p class="text-[#b0b0b0] text-lg mt-4">Static rules don’t catch logic flaws. AI alone can hallucinate. Hawk‑i combines both: Slither precision with LLM context awareness.</p>
+                <div class="mt-8 space-y-5">
+                    <div class="flex gap-3">
+                        <i class="fas fa-robot text-[#687F97] mt-1"></i>
+                        <div><span class="text-white font-medium">AI context construction</span><br><span class="text-[#77746C] text-sm">Contract summaries, function flows, state mutation — fed to GPT/Claude/Llama</span></div>
+                    </div>
+                    <div class="flex gap-3">
+                        <i class="fas fa-bug text-[#986C67] mt-1"></i>
+                        <div><span class="text-white font-medium">Exploit simulation validates</span><br><span class="text-[#77746C] text-sm">Live attacks in sandboxed environment, trace recording, PoC scripts</span></div>
+                    </div>
+                </div>
+                <!-- mini chart -->
+                <div class="mt-10 bg-black/40 p-5 rounded-xl border border-[#687F97]/20">
+                    <canvas id="vulnChart" width="400" height="200" style="max-height:200px"></canvas>
+                    <p class="text-xs text-[#77746C] mt-2">⬆︎ Vulnerability categories (static vs AI-detected)</p>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="cli-window p-6 border-[#687F97]">
+                    <h4 class="text-lg font-mono text-white flex items-center gap-2"><i class="fas fa-message text-[#986C67]"></i> AI audit sample</h4>
+                    <div class="mt-4 text-sm text-[#b0b0b0] font-mono">
+                        <p><span class="text-[#687F97]">[AIRE]</span> Analyzing <span class="text-white">Vault.sol</span></p>
+                        <p class="mt-2 text-[#986C67]">⚠ Possible flash loan attack path: <br> &nbsp;&nbsp;balance check after external call</p>
+                        <p class="text-green-600">→ Suggested fix: move balance update before transfer</p>
+                        <p class="mt-4 text-[#687F97]">[sandbox] Simulating with 1M DAI flash loan ...</p>
+                        <p class="text-white">✔ Attack succeeded: vault drained (simulation)</p>
+                        <p class="text-[#77746C]">> PoC saved to /reports/vault_flashloan.js</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard preview & security scoring -->
+    <section class="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-[#2a2a2a]">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-white">Live <span class="text-[#687F97]">dashboard</span> intelligence</h2>
+            <p class="text-[#77746C] mt-2">Real‑time risk posture, exploit timelines, and repo scoring.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Score card -->
+            <div class="bg-black/40 p-6 rounded-xl border border-[#687F97]/30">
+                <div class="flex items-center justify-between">
+                    <span class="text-[#77746C]">Security score</span>
+                    <span class="text-3xl font-bold text-[#687F97]">84</span>
+                </div>
+                <div class="w-full bg-[#2a2a2a] h-2 rounded-full mt-2">
+                    <div class="bg-[#687F97] h-2 rounded-full" style="width:84%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-[#77746C] mt-1">
+                    <span>critical</span>
+                    <span>exceptional</span>
+                </div>
+                <div class="mt-4 border-t border-[#2a2a2a] pt-4">
+                    <div class="flex justify-between"><span class="text-[#b0b0b0]">complexity risk</span> <span class="text-[#986C67]">high</span></div>
+                    <div class="flex justify-between"><span class="text-[#b0b0b0]">upgradeability</span> <span class="text-white">medium</span></div>
+                    <div class="flex justify-between"><span class="text-[#b0b0b0]">dependencies</span> <span class="text-[#687F97]">3 audit</span></div>
+                </div>
+            </div>
+            <!-- Chart bar preview -->
+            <div class="bg-black/40 p-6 rounded-xl border border-[#687F97]/30 md:col-span-2">
+                <canvas id="severityChart" width="400" height="180" style="max-height:180px"></canvas>
+            </div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6 mt-6">
+            <div class="bg-black/40 p-5 rounded-xl border border-[#687F97]/30">
+                <i class="fas fa-eye text-[#986C67]"></i>
+                <span class="ml-2 text-white font-mono">Continuous monitoring · 12 commits behind</span>
+                <div class="flex gap-4 mt-3 text-sm">
+                    <span class="bg-[#687F97]/20 text-[#687F97] px-2 py-1 rounded">PR #42: new oracle</span>
+                    <span class="bg-[#986C67]/20 text-[#986C67] px-2 py-1 rounded">! re-scan needed</span>
+                </div>
+            </div>
+            <div class="bg-black/40 p-5 rounded-xl border border-[#687F97]/30">
+                <i class="fas fa-flask text-[#687F97]"></i>
+                <span class="ml-2 text-white font-mono">Last exploit simulation: 2h ago · 3 PoCs</span>
+                <div class="mt-2 text-xs text-[#77746C]">reentrancy, flash loan, governance attack</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLI Reference & Code Block -->
+    <section class="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-[#2a2a2a]">
+        <div class="flex flex-col lg:flex-row gap-12">
+            <div class="lg:w-1/2">
+                <span class="text-[#986C67] font-mono text-sm">// terminal first</span>
+                <h2 class="text-4xl font-bold text-white mt-2">One CLI to <span class="text-[#687F97]">watch them all</span></h2>
+                <p class="text-[#b0b0b0] mt-4">hawki is your swiss army knife for Web3 security. Every function accessible from the command line, perfect for CI/CD and local dev.</p>
+                <div class="mt-8 space-y-3 font-mono text-sm">
+                    <div class="flex"><span class="text-[#687F97] w-28">hawki scan</span> <span class="text-[#77746C]">– quick vulnerability scan</span></div>
+                    <div class="flex"><span class="text-[#687F97] w-28">hawki audit</span> <span class="text-[#77746C]">– deep AI + static analysis</span></div>
+                    <div class="flex"><span class="text-[#687F97] w-28">hawki simulate</span> <span class="text-[#77746C]">– fire up sandbox & attack</span></div>
+                    <div class="flex"><span class="text-[#687F97] w-28">hawki watch</span> <span class="text-[#77746C]">– monitor repo / hooks</span></div>
+                    <div class="flex"><span class="text-[#687F97] w-28">hawki report</span> <span class="text-[#77746C]">– generate PDF/markdown</span></div>
+                </div>
+            </div>
+            <div class="lg:w-1/2">
+                <div class="cli-window p-5">
+                    <div class="flex gap-2 mb-3">
+                        <div class="w-3 h-3 rounded-full bg-[#986C67]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#687F97]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#77746C]"></div>
+                    </div>
+                    <pre class="text-xs sm:text-sm font-mono text-[#b0b0b0] overflow-x-auto"><span class="text-[#687F97]">$</span> hawki audit ./defi-protocol --ai --sandbox
+<span class="text-[#687F97]">[RIE]</span> indexing 42 contracts, 3 libraries
+<span class="text-[#687F97]">[SRE]</span> Slither: 2 medium, 1 low
+<span class="text-[#687F97]">[AIRE]</span> using Gemini (local key) ...
+⚠ Logic flaw in `liquidate()`: incorrect interest calculation
+<span class="text-[#687F97]">[ESS]</span> deploying fork mainnet...
+💥 Simulated exploit: 312 ETH extracted
+<span class="text-[#986C67]">→ critical severity confirmed</span>
+<span class="text-[#687F97]">$</span> hawki report --pdf > hawk-audit.pdf</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roadmap Phases (simple) -->
+    <section class="relative z-10 max-w-7xl mx-auto px-6 py-20 border-t border-[#2a2a2a]">
+        <div class="text-center">
+            <span class="text-[#986C67] font-mono text-sm">// roadmap</span>
+            <h2 class="text-4xl font-bold text-white mt-2">Phased to <span class="text-[#687F97]">sovereignty</span></h2>
+        </div>
+        <div class="flex flex-wrap justify-center gap-6 mt-12">
+            <div class="w-36 text-center"><div class="w-12 h-12 rounded-full bg-[#687F97]/20 border-2 border-[#687F97] mx-auto flex items-center justify-center text-white font-bold">1</div><p class="mt-2 font-mono text-sm">Repo + static</p></div>
+            <div class="w-36 text-center"><div class="w-12 h-12 rounded-full bg-[#687F97]/20 border-2 border-[#687F97] mx-auto flex items-center justify-center text-white font-bold">2</div><p class="mt-2 font-mono text-sm">AI reasoning</p></div>
+            <div class="w-36 text-center"><div class="w-12 h-12 rounded-full bg-[#687F97]/20 border-2 border-[#687F97] mx-auto flex items-center justify-center text-white font-bold">3</div><p class="mt-2 font-mono text-sm">Exploit sandbox</p></div>
+            <div class="w-36 text-center"><div class="w-12 h-12 rounded-full bg-[#687F97]/20 border-2 border-[#687F97] mx-auto flex items-center justify-center text-white font-bold">4</div><p class="mt-2 font-mono text-sm">Monitoring</p></div>
+            <div class="w-36 text-center"><div class="w-12 h-12 rounded-full bg-[#687F97]/20 border-2 border-[#687F97] mx-auto flex items-center justify-center text-white font-bold">5</div><p class="mt-2 font-mono text-sm">DAO intelligence</p></div>
+        </div>
+        <p class="text-center text-[#77746C] mt-8 text-sm">Open public good — community rules, detector SDK, cross‑chain</p>
+    </section>
+
+    <!-- live chain & security platform ticker -->
+    <div class="ticker-wrap">
+        <div class="ticker-move">
+            <!-- first set of items (duplicated for seamless loop) -->
+            <span class="ticker-item"><i class="fas fa-link"></i> Ethereum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> BNB Chain</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Polygon</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Arbitrum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Optimism</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Avalanche</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Fantom</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Gnosis</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Slither</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Mythril</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Foundry</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Hardhat</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Echidna</span>
+            <!-- duplicate for seamless loop -->
+            <span class="ticker-item"><i class="fas fa-link"></i> Ethereum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> BNB Chain</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Polygon</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Arbitrum</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Optimism</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Avalanche</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Fantom</span>
+            <span class="ticker-item"><i class="fas fa-link"></i> Gnosis</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Slither</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Mythril</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Foundry</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Hardhat</span>
+            <span class="ticker-item"><i class="fas fa-shield-alt"></i> Echidna</span>
+        </div>
+    </div>
+
+    <!-- Footer / Grant positioning -->
+    <footer class="relative z-10 border-t border-[#2a2a2a] bg-black/50">
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-eye text-2xl text-[#687F97]"></i>
+                    <span class="text-xl font-bold text-white">Hawk‑i</span>
+                    <span class="text-xs text-[#77746C]">© 2026 · security public good</span>
+                </div>
+                <div class="flex gap-8 text-sm">
+                    <a href="https://github.com/0xSemantic/hawki" target="_blank" class="text-[#77746C] hover:text-[#687F97] transition">GitHub</a>
+                    <a href="https://pypi.org/project/hawki/" target="_blank" class="text-[#77746C] hover:text-[#687F97] transition">PyPI</a>
+                    <a href="https://hub.docker.com/r/levichinecherem/hawki" target="_blank" class="text-[#77746C] hover:text-[#687F97] transition">Docker</a>
+                    <span class="text-[#687F97]">#infrastructure #opensource</span>
+                </div>
+            </div>
+            <div class="mt-8 text-center text-xs text-[#77746C] border-t border-[#2a2a2a] pt-6">
+                Hawk-i is designed as public security infrastructure — open, verifiable, and privacy-first.  
+                Eligible for ecosystem use & developer tooling funding.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Charts init script -->
+    <script>
+        (function() {
+            // Vuln chart (static vs AI)
+            const ctx1 = document.getElementById('vulnChart')?.getContext('2d');
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Reentrancy', 'Access', 'Oracle', 'Flash loan', 'Governance'],
+                        datasets: [
+                            { label: 'Static detections', data: [8, 12, 4, 0, 1], backgroundColor: '#687F97' },
+                            { label: 'AI + simulation', data: [10, 14, 9, 7, 6], backgroundColor: '#986C67' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#b0b0b0' } } }, scales: { y: { ticks: { color: '#77746C' } }, x: { ticks: { color: '#77746C' } } } }
+                });
+            }
+            // severity donut or bar
+            const ctx2 = document.getElementById('severityChart')?.getContext('2d');
+            if (ctx2) {
+                new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Critical', 'High', 'Medium', 'Low'],
+                        datasets: [{
+                            data: [2, 7, 15, 23],
+                            backgroundColor: ['#986C67', '#a05242', '#687F97', '#77746C'],
+                            borderColor: 'transparent'
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { labels: { color: '#b0b0b0' } } } }
+                });
+            }
+
+            // 3D Scene (minimal rotating core)
+            const container = document.getElementById('three-canvas');
+            if (container && typeof THREE !== 'undefined') {
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 0, 15);
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0x000000, 0); // transparent
+                container.appendChild(renderer.domElement);
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0x404060);
+                scene.add(ambientLight);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                dirLight.position.set(1, 2, 1);
+                scene.add(dirLight);
+
+                // Main object: torus knot with steel blue / copper
+                const geometry = new THREE.TorusKnotGeometry(1.5, 0.4, 128, 16);
+                const material = new THREE.MeshPhongMaterial({ color: 0x687F97, emissive: 0x1a2a33, wireframe: true, transparent: true, opacity: 0.25 });
+                const knot = new THREE.Mesh(geometry, material);
+                scene.add(knot);
+
+                // inner solid shape with copper
+                const innerGeo = new THREE.IcosahedronGeometry(1, 1);
+                const innerMat = new THREE.MeshStandardMaterial({ color: 0x986C67, emissive: 0x331e1b, wireframe: false, transparent: true, opacity: 0.2 });
+                const inner = new THREE.Mesh(innerGeo, innerMat);
+                scene.add(inner);
+
+                // particles
+                const particlesGeo = new THREE.BufferGeometry();
+                const particlesCount = 800;
+                const posArray = new Float32Array(particlesCount * 3);
+                for(let i = 0; i < particlesCount * 3; i += 3) {
+                    posArray[i] = (Math.random() - 0.5) * 20;
+                    posArray[i+1] = (Math.random() - 0.5) * 20;
+                    posArray[i+2] = (Math.random() - 0.5) * 20;
+                }
+                particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+                const particlesMat = new THREE.PointsMaterial({ size: 0.08, color: 0x77746C });
+                const particles = new THREE.Points(particlesGeo, particlesMat);
+                scene.add(particles);
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    knot.rotation.x += 0.002;
+                    knot.rotation.y += 0.005;
+                    inner.rotation.x -= 0.001;
+                    inner.rotation.y += 0.003;
+                    particles.rotation.y += 0.0002;
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+        })();
+    </script>
+
+    <!-- subtle hover effects -->
+</body>
+</html>

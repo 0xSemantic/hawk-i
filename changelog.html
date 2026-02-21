@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hawk‑i · Changelog (v0.6.0 → v0.7.0)</title>
+    <!-- SEO -->
+    <meta name="description" content="Detailed evolution report from v0.6.0 to v0.7.0: architectural upgrades, risk scoring, ARS v2, remediation engine, and more.">
+    <meta name="keywords" content="Hawk-i changelog, release notes, v0.7.0, security intelligence, Web3 auditing">
+    <!-- Tailwind + Inter font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* brand color palette */
+        :root {
+            --steel: #687F97;
+            --copper: #986C67;
+            --grey: #77746C;
+        }
+        body {
+            background: #0c0c0c;
+            color: #e5e5e5;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            scroll-behavior: smooth;
+            overflow-x: hidden;
+        }
+        .text-steel { color: var(--steel); }
+        .text-copper { color: var(--copper); }
+        .text-grey { color: var(--grey); }
+        .bg-steel { background-color: var(--steel); }
+        .border-steel { border-color: var(--steel); }
+
+        /* left sidebar */
+        .docs-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 18rem;
+            height: 100vh;
+            background: #0f0f0f;
+            border-right: 1px solid #202020;
+            overflow-y: auto;
+            transition: transform 0.2s ease;
+            z-index: 50;
+        }
+        .docs-sidebar a {
+            display: block;
+            padding: 0.6rem 1.5rem;
+            color: #aaa;
+            border-left: 3px solid transparent;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+        .docs-sidebar a:hover, .docs-sidebar a.active {
+            color: white;
+            background: rgba(104, 127, 151, 0.1);
+            border-left-color: var(--steel);
+        }
+        .docs-sidebar .section-title {
+            padding: 1rem 1.5rem 0.3rem;
+            color: var(--grey);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* right sidebar (table of contents) */
+        .docs-right-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 16rem;
+            height: 100vh;
+            background: #0f0f0f;
+            border-left: 1px solid #202020;
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            z-index: 40;
+        }
+        .docs-right-sidebar .toc-title {
+            color: var(--steel);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .docs-right-sidebar .toc-item {
+            display: block;
+            padding: 0.4rem 0;
+            color: #aaa;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+            border-left: 2px solid transparent;
+            padding-left: 0.5rem;
+        }
+        .docs-right-sidebar .toc-item:hover,
+        .docs-right-sidebar .toc-item.active {
+            color: white;
+            border-left-color: var(--steel);
+            background: rgba(104, 127, 151, 0.05);
+        }
+        .docs-right-sidebar .toc-item.toc-h2 {
+            font-weight: 400;
+        }
+        .docs-right-sidebar .toc-item.toc-h3 {
+            padding-left: 1.5rem;
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        /* main content */
+        .docs-main {
+            margin-left: 18rem;
+            margin-right: 16rem;
+            padding: 2rem 2.5rem;
+            /* max-width: 900px; */ /* remove */
+            width: auto; /* default */
+        }
+
+        /* mobile adjustments */
+        @media (max-width: 768px) {
+            .docs-sidebar {
+                transform: translateX(-100%);
+            }
+            .docs-sidebar.open {
+                transform: translateX(0);
+            }
+            .docs-right-sidebar {
+                display: none;
+            }
+            .docs-main {
+                margin-left: 0;
+                margin-right: 0;
+                padding: 1.5rem;
+            }
+            .menu-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 45;
+            }
+            .menu-overlay.open {
+                display: block;
+            }
+        }
+
+        /* card style for highlights */
+        .doc-card {
+            background: #151515;
+            border: 1px solid #2a2a2a;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .doc-card h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: white;
+            scroll-margin-top: 5rem;
+        }
+        .doc-card h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin: 1.5rem 0 0.8rem;
+            color: var(--steel);
+            scroll-margin-top: 5rem;
+        }
+        .doc-card p, .doc-card li, .doc-card table {
+            color: #b0b0b0;
+            line-height: 1.6;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid var(--steel);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #d4d4d4;
+        }
+        .inline-code {
+            background: #1e1e1e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            border: 1px solid #333;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        hr {
+            border-color: #2a2a2a;
+            margin: 2rem 0;
+        }
+        .badge {
+            background: var(--steel);
+            color: black;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #2a2a2a;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        th {
+            background: #1e1e1e;
+            color: var(--steel);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- mobile overlay -->
+    <div id="menuOverlay" class="menu-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Left Sidebar (navigation) -->
+    <aside id="sidebar" class="docs-sidebar">
+        <div class="p-5 flex items-center gap-2 border-b border-[#252525]">
+            <i class="fas fa-eye text-2xl text-[#687F97]"></i>
+            <span class="text-2xl font-bold text-white">Hawk‑<span class="text-[#687F97]">i</span></span>
+        </div>
+        <nav class="py-4">
+            <div class="section-title">RELEASE</div>
+            <a href="#executive-summary" class="active">1. Executive Summary</a>
+            <a href="#architectural-comparison">2. Architectural Comparison</a>
+            <a href="#detection-engine-evolution">3. Detection Engine Evolution</a>
+            <a href="#risk-scoring-system">4. Risk Scoring System</a>
+            <a href="#reporting-system-evolution">5. Reporting System (ARS v2)</a>
+            <a href="#vulnerability-coverage">6. Vulnerability Coverage</a>
+            <a href="#remediation-engine">7. Remediation Engine</a>
+            <a href="#exploit-sandbox-evolution">8. Exploit Sandbox</a>
+            <a href="#telemetry-system">9. Telemetry System</a>
+            <a href="#cli-evolution">10. CLI Evolution</a>
+            <a href="#data-layer-evolution">11. Data Layer Evolution</a>
+            <a href="#maturity-level-comparison">12. Maturity Level Comparison</a>
+            <a href="#philosophical-shift">13. Philosophical Shift</a>
+            <a href="#breaking-changes">14. Breaking Changes</a>
+            <a href="#strategic-positioning">15. Strategic Positioning</a>
+        </nav>
+        <div class="p-5 border-t border-[#252525] text-xs text-[#77746C]">
+            <i class="fas fa-shield-alt mr-2"></i>v0.6.0 → v0.7.0 · evolution report
+        </div>
+    </aside>
+
+    <!-- Right Sidebar (On this page) -->
+    <aside class="docs-right-sidebar" id="rightSidebar">
+        <div class="toc-title">📋 ON THIS PAGE</div>
+        <div id="toc-container">
+            <!-- populated by JavaScript -->
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="docs-main">
+
+        <!-- mobile header -->
+        <div class="flex items-center gap-3 mb-6 md:hidden">
+            <button onclick="toggleSidebar()" class="text-2xl text-[#687F97]">
+                <i class="fas fa-bars"></i>
+            </button>
+            <i class="fas fa-eye text-2xl text-[#687F97]"></i>
+            <span class="text-xl font-bold text-white">Hawk‑i Changelog</span>
+        </div>
+
+        <!-- Title -->
+        <section id="title" class="doc-card scroll-mt-16">
+            <h1 class="text-4xl font-bold text-white mb-2">🦅 Hawk‑i · v0.6.0 → v0.7.0 Evolution Report</h1>
+            <p class="text-grey">Document: <code>v0_6_0_to_v0_7_0_diff.md</code><br>
+            Purpose: Precisely define architectural, operational, and capability differences between v0.6.0 and v0.7.0. This document serves as a comprehensive reference for developers, contributors, and stakeholders to understand the maturity leap.</p>
+        </section>
+
+        <!-- 1️⃣ Executive Summary -->
+        <section id="executive-summary" class="doc-card scroll-mt-16">
+            <h2>1️⃣ Executive Summary</h2>
+            <p><strong>v0.6.0</strong> was a <strong>functional security scanner</strong> – it could ingest repositories, run static rules, optionally invoke AI reasoning, and optionally simulate exploits in a sandbox. Reports were basic markdown lists of findings.</p>
+            <p><strong>v0.7.0</strong> transforms Hawk‑i into an <strong>audit‑grade security intelligence system</strong>. It introduces professional reporting (ARS v2), a deterministic security score, guided remediation snippets, an expanded vulnerability library (30 rules), opt‑in telemetry, and deep integration between sandbox results and risk quantification. The system now answers not just <em>“what vulnerabilities exist?”</em> but also <em>“how severe are they, can they be exploited, what is the quantified risk, and how do we fix them?”</em>.</p>
+            <p>This is <strong>not a patch release</strong>; it is a <strong>maturity milestone</strong>. All enhancements are <strong>additive and backward‑compatible</strong> – existing CLI commands and workflows continue to work unchanged.</p>
+        </section>
+
+        <!-- 2️⃣ High‑Level Architectural Comparison -->
+        <section id="architectural-comparison" class="doc-card scroll-mt-16">
+            <h2>2️⃣ High‑Level Architectural Comparison</h2>
+            <table>
+                <thead><tr><th>Category</th><th>v0.6.0</th><th>v0.7.0</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Static Rules</strong></td><td>Dynamic discovery, ~15–20 rules</td><td>Expanded to <strong>30 rules</strong>, each with explanation, impact, fix templates</td></tr>
+                    <tr><td><strong>AI Engine</strong></td><td>Optional reasoning, no scoring integration</td><td>Integrated with scoring & fallback explanation logic</td></tr>
+                    <tr><td><strong>Exploit Sandbox</strong></td><td>Optional simulation, basic success flag</td><td>Structured metrics (balances, gas, tx hash), integrated into score & report</td></tr>
+                    <tr><td><strong>Reporting</strong></td><td>Basic markdown list of findings</td><td><strong>Audit‑Grade Report System (ARS v2)</strong> – executive summary, score, charts, per‑finding remediation</td></tr>
+                    <tr><td><strong>Risk Score</strong></td><td>❌ Not available</td><td>✅ <strong>0–100 deterministic scoring</strong> with severity deductions & simulation penalties</td></tr>
+                    <tr><td><strong>Severity Charts</strong></td><td>❌</td><td>✅ Auto‑generated pie/bar charts (with table fallback)</td></tr>
+                    <tr><td><strong>Guided Fix Snippets</strong></td><td>Ad‑hoc, inconsistent</td><td>✅ <strong>Remediation Engine</strong> with template‑based, context‑aware fixes</td></tr>
+                    <tr><td><strong>Telemetry</strong></td><td>❌</td><td>✅ <strong>Opt‑in anonymous metrics</strong> (scans, findings, version)</td></tr>
+                    <tr><td><strong>CLI Commands</strong></td><td><code>hawki scan</code> only</td><td><code>hawki scan</code>, <code>hawki report</code>, <code>hawki score</code>, <code>hawki metrics</code></td></tr>
+                    <tr><td><strong>Output Formats</strong></td><td>Markdown</td><td>Markdown, JSON, PDF (optional)</td></tr>
+                    <tr><td><strong>Data Layer</strong></td><td><code>ReportManager</code> (single)</td><td><code>reporting/</code> subsystem with versioned generators</td></tr>
+                    <tr><td><strong>Exploit Metrics</strong></td><td>Success flag only</td><td>Balance delta, gas used, transaction hash, logs</td></tr>
+                    <tr><td><strong>Grant Readiness</strong></td><td>Early‑stage</td><td><strong>Audit‑grade infrastructure</strong> – quantifiable, demonstrable</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 3️⃣ Detection Engine Evolution -->
+        <section id="detection-engine-evolution" class="doc-card scroll-mt-16">
+            <h2>3️⃣ Detection Engine Evolution</h2>
+            <h3>v0.6.0</h3>
+            <p>Rules were Python files in <code>static_rule_engine/rules/</code> discovered dynamically. Each rule defined a <code>run_check()</code> method and a <code>severity</code> attribute. AI reasoning was optional; if enabled, the <code>ReasoningAgent</code> added explanations. There was <strong>no enforced schema</strong> for findings – fields varied across rules. Exploit pairing was not mandatory; some rules lacked corresponding attack scripts. No standardised explanation or impact fields – reports relied on AI or rule comments.</p>
+            <h4>Limitations</h4>
+            <ul>
+                <li>Inconsistent finding structure made report generation brittle.</li>
+                <li>No fallback when AI was disabled – reports lacked explanations.</li>
+                <li>Remediation suggestions were embedded in rule logic, not reusable.</li>
+                <li>No correlation between detection and exploit simulation.</li>
+            </ul>
+            <h3>v0.7.0</h3>
+            <h4>Standardised Finding Object</h4>
+            <p>Every finding now conforms to a <strong>strict schema</strong>:</p>
+            <pre><code>{
+    "id": str,                     # e.g., "REENT-001"
+    "title": str,                   # e.g., "[CRITICAL] Reentrancy in withdraw()"
+    "severity": str,                 # "Critical", "High", "Medium", "Low"
+    "file": str,                     # Path relative to repo root
+    "line": int,                     # Starting line number
+    "vulnerable_snippet": str,       # Code block showing the issue
+    "fix_snippet": str,               # Populated by Remediation Engine
+    "explanation": str,               # Why it's dangerous (AI or fallback)
+    "impact": str,                    # Potential consequences (AI or fallback)
+    "exploit_steps": list or None,    # Steps if sandbox succeeded
+    "ai_used": bool                    # Whether AI contributed
+}</code></pre>
+            <h4>Rule Requirements Expanded</h4>
+            <p>Each rule file must now define class attributes (or provide them via methods):</p>
+            <pre><code>class ReentrancyRule:
+    severity = "Critical"
+    explanation_template = "This function allows reentrant calls because it updates state after an external call."
+    impact_template = "An attacker can drain funds by recursively calling back before state updates."
+    fix_template = "Apply the checks-effects-interactions pattern and add a nonReentrant modifier."
+
+    def run_check(self, contract_ast, ...):
+        # detection logic
+        return findings  # each finding will inherit these templates</code></pre>
+            <ul>
+                <li><strong>Explanation fallback</strong>: If AI is disabled, the rule’s <code>explanation_template</code> is used.</li>
+                <li><strong>Impact fallback</strong>: Similarly, <code>impact_template</code> provides deterministic impact statements.</li>
+                <li><strong>Fix snippet</strong>: The <code>fix_template</code> is passed to the Remediation Engine for context‑aware population.</li>
+            </ul>
+            <p><strong>Result:</strong> Detection is now deterministic, self‑contained, and report‑ready.</p>
+        </section>
+
+        <!-- 4️⃣ Risk Scoring System -->
+        <section id="risk-scoring-system" class="doc-card scroll-mt-16">
+            <h2>4️⃣ Risk Scoring System</h2>
+            <p><strong>v0.6.0:</strong> ❌ No scoring system. Users had to interpret severity counts manually.</p>
+            <p><strong>v0.7.0:</strong> New component: <code>scoring_engine.py</code> inside <code>data_layer/reporting/</code>.</p>
+            <h4>Scoring Formula</h4>
+            <ul>
+                <li><strong>Base score</strong>: 100</li>
+                <li><strong>Deductions per finding</strong>: Critical -15, High -8, Medium -4, Low -1</li>
+                <li><strong>Simulation penalty</strong> (if sandbox enabled): -5 per successfully reproduced exploit (capped at -15)</li>
+            </ul>
+            <h4>Classification Bands</h4>
+            <table>
+                <thead><tr><th>Score</th><th>Classification</th></tr></thead>
+                <tbody>
+                    <tr><td>90–100</td><td>Secure</td></tr>
+                    <tr><td>75–89</td><td>Minor Risk</td></tr>
+                    <tr><td>50–74</td><td>Moderate Risk</td></tr>
+                    <tr><td>25–49</td><td>High Risk</td></tr>
+                    <tr><td>0–24</td><td>Critical Risk</td></tr>
+                </tbody>
+            </table>
+            <h4>Output Example</h4>
+            <pre><code>{
+    "score": 61,
+    "classification": "High Risk",
+    "deductions": {
+        "critical": 3,
+        "high": 4,
+        "simulation_penalty": 2
+    },
+    "simulation_used": True,
+    "ai_used": True
+}</code></pre>
+            <p><strong>Impact:</strong> Quantified risk posture, executive summaries, grant credibility.</p>
+        </section>
+
+        <!-- 5️⃣ Reporting System Evolution (ARS v2) -->
+        <section id="reporting-system-evolution" class="doc-card scroll-mt-16">
+            <h2>5️⃣ Reporting System Evolution (ARS v2)</h2>
+            <p><strong>v0.6.0:</strong> Markdown only, simple list of findings, no executive summary, no charts.</p>
+            <p><strong>v0.7.0:</strong> New directory <code>core/data_layer/reporting/</code> with multiple modules.</p>
+            <ul>
+                <li><code>report_generator_v2.py</code> – generates reports with executive summary, score, charts, per‑finding details.</li>
+                <li><code>chart_renderer.py</code> – creates severity pie chart and vulnerability bar chart (PNG) using matplotlib.</li>
+                <li><code>templates/</code> – Jinja2 templates for HTML/Markdown.</li>
+            </ul>
+            <p><strong>Report structure:</strong> Executive summary, vulnerability breakdown (chart + table), per‑finding details with fix snippets and exploit steps.</p>
+        </section>
+
+        <!-- 6️⃣ Vulnerability Coverage Expansion -->
+        <section id="vulnerability-coverage" class="doc-card scroll-mt-16">
+            <h2>6️⃣ Vulnerability Coverage Expansion</h2>
+            <p><strong>v0.6.0:</strong> ~15–20 rules, limited exploit pairing.</p>
+            <p><strong>v0.7.0:</strong> <strong>Capped at 30 strong vulnerabilities</strong>, each critical/high has a corresponding attack script. Attack scripts return structured data (balances, gas, tx hash). New examples: permit signature replay, integer overflow, signature malleability, reused nonce, centralized owner risk.</p>
+        </section>
+
+        <!-- 7️⃣ Remediation Engine -->
+        <section id="remediation-engine" class="doc-card scroll-mt-16">
+            <h2>7️⃣ Remediation Engine (New in v0.7.0)</h2>
+            <p><strong>v0.6.0:</strong> Fix suggestions embedded in rule logic, inconsistent.</p>
+            <p><strong>v0.7.0:</strong> New module <code>core/remediation_engine/</code>. Uses template files (e.g., <code>reentrancy.json</code>) with placeholders like <code>{{function_name}}</code>. Populates <code>fix_snippet</code> in findings. Extensible and context‑aware.</p>
+        </section>
+
+        <!-- 8️⃣ Exploit Sandbox Evolution -->
+        <section id="exploit-sandbox-evolution" class="doc-card scroll-mt-16">
+            <h2>8️⃣ Exploit Sandbox Evolution</h2>
+            <p><strong>v0.6.0:</strong> <code>SandboxManager.run_all()</code> returned simple success booleans.</p>
+            <p><strong>v0.7.0:</strong> Extended return structure with balance delta, gas used, tx hash, logs. Simulation success rate in executive summary, score penalty for successful exploits.</p>
+        </section>
+
+        <!-- 9️⃣ Telemetry System -->
+        <section id="telemetry-system" class="doc-card scroll-mt-16">
+            <h2>9️⃣ Telemetry System (New)</h2>
+            <p><strong>v0.6.0:</strong> ❌ No telemetry.</p>
+            <p><strong>v0.7.0:</strong> Opt‑in anonymous telemetry via <code>--telemetry</code>. Collects scan count, findings per severity, version, etc. Stored locally and optionally sent to Hawk‑i API. New CLI command <code>hawki metrics</code>.</p>
+        </section>
+
+        <!-- 🔟 CLI Evolution -->
+        <section id="cli-evolution" class="doc-card scroll-mt-16">
+            <h2>🔟 CLI Evolution</h2>
+            <p><strong>v0.6.0:</strong> <code>hawki scan &lt;repo&gt; [--ai] [--sandbox]</code></p>
+            <p><strong>v0.7.0:</strong> New subcommands: <code>hawki report</code>, <code>hawki score</code>, <code>hawki metrics</code>. Extended <code>scan</code> with <code>--telemetry</code> and <code>--format</code>. Backward compatible.</p>
+        </section>
+
+        <!-- 1️⃣1️⃣ Data Layer Evolution -->
+        <section id="data-layer-evolution" class="doc-card scroll-mt-16">
+            <h2>1️⃣1️⃣ Data Layer Evolution</h2>
+            <p><strong>v0.6.0:</strong> <code>report_manager.py</code> with <code>save_findings()</code>.</p>
+            <p><strong>v0.7.0:</strong> <code>report_manager.py</code> now has <code>generate_report()</code> delegating to <code>reporting/</code>. New subdirectory <code>reporting/</code> with versioned generators. Old findings format (v1) remains valid.</p>
+        </section>
+
+        <!-- 1️⃣2️⃣ System Maturity Level Comparison -->
+        <section id="maturity-level-comparison" class="doc-card scroll-mt-16">
+            <h2>1️⃣2️⃣ System Maturity Level Comparison</h2>
+            <table>
+                <thead><tr><th>Dimension</th><th>v0.6.0</th><th>v0.7.0</th></tr></thead>
+                <tbody>
+                    <tr><td>Developer Tool</td><td>✅</td><td>✅</td></tr>
+                    <tr><td>Security Tool</td><td>✅</td><td>✅</td></tr>
+                    <tr><td>Audit Tool</td><td>⚠️ Partial</td><td>✅ Full</td></tr>
+                    <tr><td>Grant‑Ready</td><td>Early‑stage</td><td><strong>Strong</strong></td></tr>
+                    <tr><td>Enterprise Demo</td><td>Weak</td><td><strong>Strong</strong></td></tr>
+                    <tr><td>Quantifiable Intelligence</td><td>❌</td><td>✅ (score, metrics)</td></tr>
+                    <tr><td>Deterministic Risk Scoring</td><td>❌</td><td>✅</td></tr>
+                    <tr><td>Remediation Guidance</td><td>Basic</td><td><strong>Structured</strong></td></tr>
+                    <tr><td>Exploit Simulation Integration</td><td>Minimal</td><td><strong>Deep</strong></td></tr>
+                    <tr><td>Public Impact Metrics</td><td>❌</td><td>✅ (opt‑in)</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 1️⃣3️⃣ Philosophical Shift -->
+        <section id="philosophical-shift" class="doc-card scroll-mt-16">
+            <h2>1️⃣3️⃣ Philosophical Shift</h2>
+            <p><strong>v0.6.0</strong> = a <strong>scanner</strong> – it finds problems and lists them.</p>
+            <p><strong>v0.7.0</strong> = an <strong>intelligence system</strong> – it quantifies risk, explains impact, demonstrates exploitability, and guides remediation.</p>
+            <p>v0.6.0 answers: “What vulnerabilities exist?”</p>
+            <p>v0.7.0 answers: “What vulnerabilities exist, how severe are they, can they be exploited, what is the quantified risk, and how do we fix them?”</p>
+        </section>
+
+        <!-- 1️⃣4️⃣ Breaking Changes -->
+        <section id="breaking-changes" class="doc-card scroll-mt-16">
+            <h2>1️⃣4️⃣ Breaking Changes</h2>
+            <p><strong>None.</strong> All existing CLI commands work unchanged. Existing rule files continue to load (fallbacks apply). Old findings JSON files can still be read. <strong>Additive only</strong> – users can upgrade without modifying their workflows.</p>
+        </section>
+
+        <!-- 1️⃣5️⃣ Strategic Positioning After Upgrade -->
+        <section id="strategic-positioning" class="doc-card scroll-mt-16">
+            <h2>1️⃣5️⃣ Strategic Positioning After Upgrade</h2>
+            <p>With v0.7.0, Hawk‑i is now:</p>
+            <blockquote class="text-white border-l-4 border-steel pl-4 italic">Modular, measurable, audit‑grade security intelligence infrastructure for Web3 repositories.</blockquote>
+            <p>This positions the project for grants, enterprise pilots, ecosystem partnerships, and community growth. The foundation is now laid for future phases (monitoring network, cross‑chain support, etc.).</p>
+            <p class="mt-4 text-grey text-sm">End of v0.6.0 → v0.7.0 Evolution Report</p>
+        </section>
+
+        <hr>
+        <footer class="text-sm text-[#77746C] flex justify-between">
+            <span>© 2026 Hawk‑i · open security infrastructure</span>
+            <span>
+                <a href="https://github.com/0xSemantic/hawki" target="_blank" class="text-xl hover:text-[#687F97]"><i class="fab fa-github"></i></a>
+                <a href="#" class="text-xl ml-2 hover:text-[#687F97]"><i class="fab fa-discord"></i></a>
+                <a href="https://hub.docker.com/r/levichinecherem/hawki" target="_blank" class="text-xl ml-2 hover:text-[#687F97]"><i class="fab fa-docker"></i></a>
+            </span>
+        </footer>
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        // Toggle left sidebar on mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('menuOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        // Build table of contents for right sidebar
+        function buildToc() {
+            const container = document.getElementById('toc-container');
+            const sections = document.querySelectorAll('section[id]');
+            let tocHtml = '';
+
+            sections.forEach(section => {
+                const id = section.getAttribute('id');
+                const h2 = section.querySelector('h2');
+                if (h2) {
+                    tocHtml += `<a class="toc-item toc-h2" href="#${id}">${h2.innerText}</a>`;
+
+                    // optionally add h3 items under this section
+                    const h3s = section.querySelectorAll('h3');
+                    h3s.forEach(h3 => {
+                        // create an id for h3 if not present (use slug)
+                        if (!h3.id) {
+                            h3.id = h3.innerText.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                        }
+                        tocHtml += `<a class="toc-item toc-h3" href="#${h3.id}">${h3.innerText}</a>`;
+                    });
+                }
+            });
+
+            container.innerHTML = tocHtml || '<p class="text-grey">No sections</p>';
+
+            // highlight active TOC item on scroll
+            window.addEventListener('scroll', () => {
+                const scrollPosition = window.scrollY + 100;
+                const tocLinks = document.querySelectorAll('.toc-item');
+                let activeId = '';
+
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionBottom = sectionTop + section.offsetHeight;
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                        activeId = section.getAttribute('id');
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === '#' + activeId) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        // highlight left nav based on scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 80;
+                if (pageYOffset >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            document.querySelectorAll('.docs-sidebar a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // smooth scroll for left sidebar links
+        document.querySelectorAll('.docs-sidebar a').forEach(a => {
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = a.getAttribute('href').substring(1);
+                const target = document.getElementById(targetId);
+                if (target) {
+                    window.scrollTo({ top: target.offsetTop - 70, behavior: 'smooth' });
+                }
+                if (window.innerWidth <= 768) {
+                    toggleSidebar();
+                }
+            });
+        });
+
+        // smooth scroll for right sidebar TOC links
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('toc-item')) {
+                e.preventDefault();
+                const href = e.target.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.getElementById(href.substring(1));
+                    if (target) {
+                        window.scrollTo({ top: target.offsetTop - 70, behavior: 'smooth' });
+                    }
+                }
+            }
+        });
+
+        // initialize TOC
+        buildToc();
+    </script>
+</body>
+</html>
